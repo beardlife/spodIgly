@@ -1,4 +1,5 @@
 ﻿using SpodIgly.DAL;
+using SpodIgly.Infrastructure;
 using SpodIgly.Models;
 using SpodIgly.ViewModels;
 using System;
@@ -17,9 +18,21 @@ namespace SpodIgly.Controllers
         // GET: /Home/
         public ActionResult Index()
         {
-
             var genres = db.Genres.ToList();
-            var newArrivals = db.Albums.Where(a => !a.IsHidden).OrderByDescending(a => a.DateAdded).Take(3).ToList();
+
+            ICacheProvider cache = new DefaultCacheProvider();
+            List<Album> newArrivals;
+
+            if (cache.IsSet(Consts.NewItemCacheKey))
+            {
+                newArrivals = cache.Get(Consts.NewItemCacheKey) as List<Album>;
+            }
+            else
+            {
+                newArrivals = db.Albums.Where(a => !a.IsHidden).OrderByDescending(a => a.DateAdded).Take(3).ToList();
+                cache.Set(Consts.NewItemCacheKey, newArrivals, 1000);
+            }
+                      
             var bestsellers = db.Albums.Where(a => !a.IsHidden && a.IsBestseller).OrderBy(g => Guid.NewGuid()).Take(3).ToList();
 
             var viewModel = new HomeViewModel()

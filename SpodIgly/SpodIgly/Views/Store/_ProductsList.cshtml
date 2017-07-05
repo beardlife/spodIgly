@@ -1,0 +1,28 @@
+﻿@model IEnumerable<SpodIgly.Models.Album>
+@using SpodIgly.Infrastructure
+
+<div id="productlist-section">
+    <ul class="ThreeColumnsCoversList small-cover-list">
+        @foreach (var m in Model)
+        {
+            <li>
+                <article>
+                    <a class="addtocartlink" href="@Url.Action("AddToCart", "cart", new { id = m.AlbumId})">
+                        <img src="@Url.Content("~/Content/Images/cart.png")"  alt="Dodaj do koszyka"/>
+                    </a>
+                   
+                    <a class="productdetailslink" href="@Url.Action("Details", "Store", new { id = m.AlbumId})">
+                        @if (m.IsBestseller)
+                        {
+                            <div class="bestsellerFlag"></div>
+                        }
+                        <img class="album-cover" src="@Url.AlbumCoverPath(m.CoverFileName)" />
+                        <h1>
+                            @m.ArtistName - @m.AlbumTitle
+                        </h1>
+                    </a>
+                </article>
+            </li>
+        }
+    </ul>
+</div>
