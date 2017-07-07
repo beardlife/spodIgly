@@ -25,10 +25,21 @@ namespace SpodIgly.Controllers
             return View(album);
         }
 
-        public ActionResult List(string genrename)
+        public ActionResult List(string genrename, string searchQuery = null)
         {
-            var genre = db.Genres.Where(g => g.Name.ToUpper() == genrename.ToUpper()).Single();
-            var albums = genre.Albums.ToList();
+            string decodedGenre = HttpUtility.UrlDecode(genrename);
+
+            var genre = db.Genres.Include("Albums").Where(g => g.Name.ToUpper() == decodedGenre.ToUpper()).Single();
+            var albums = genre.Albums.Where(a => (searchQuery == null ||
+                                                a.AlbumTitle.ToLower().Contains(searchQuery.ToLower()) ||
+                                                a.ArtistName.ToLower().Contains(searchQuery.ToLower())) &&
+                                                !a.IsHidden);
+
+            if (Request.IsAjaxRequest())
+            {
+                return PartialView("_ProductsList", albums);
+            }
+
 
             return View(albums);
         }
@@ -40,6 +51,13 @@ namespace SpodIgly.Controllers
             var genres = db.Genres.ToList();
 
             return PartialView("_GenresMenu",genres);
+        }
+
+        public ActionResult AlbumsSuggestions(string term)
+        {
+            var albums = db.Albums.Where(a => !a.IsHidden && a.AlbumTitle.ToLower().Contains(term.ToLower())).Take(5).Select(a => new { label = a.AlbumTitle });
+
+            return Json(albums, JsonRequestBehavior.AllowGet);
         }
 	}
 }
